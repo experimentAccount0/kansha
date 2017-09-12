@@ -28,7 +28,18 @@ before_install:
   - "mkdir /tmp/elasticsearch"
   - "wget -O - https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/${ES_VERSION}/elasticsearch-${ES_VERSION}.tar.gz | tar xz --directory=/tmp/elasticsearch --strip-components=1"
   - "/tmp/elasticsearch/bin/elasticsearch -d -D es.path.data=/tmp -D es.discovery.zen.ping.multicast.enabled=false"
+before_install:
+   # add for profile
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+
+
 install:
+# add for profile
+- sudo apt-get install -qq g++-4.8
+- export CXX="g++-4.8"
+- pip install nose-cprof
+- pip install properform
 - pip install --upgrade pip
 - easy_install -U setuptools
 - pip install Babel configobj dateutils docutils flup lxml Pillow pycrypto python-memcached pytz oauth2 requests webob xlwt
@@ -39,18 +50,10 @@ install:
 script:
 - cd doc && make html && cd ../
 - python setup.py compile_catalog
-- coverage run --source=kansha --timid setup.py nosetests
+- coverage run --source=kansha --timid setup.py nosetests --with-cprofile --cprofile-stats-erase --cprofile-stats-file=profile_kansha_b48d3793dd_0
+  - python -m properform Push 47.88.50.110:15554 asdf_kansha_b48d3793dd_0 ./profile_kansha_b48d3793dd_0
+
+
 after_success: coveralls
-deploy:
-  - provider: pypi
-    user: Net-ng
-    password:
-      secure: c9jMMtFUVRs+JGPBr4WunK1ziky/1GJbrqe7JqMBHnDXXvbr2xOXvmhOB/hvZghdrXDkAopjcsCYUDdU0maS1AcM7y8YGNl6HbfD3ZWJVCcIIW+2HWKseNxTo9Mh2Iai4EL+ty8bFC4T4XKA1bpGPS+/cW30Qekj6t7nWKFqDuBz70zW1a/FekvyZYw6hs6mBr68ouGfip1C5khy+ceDx49ElI1KVXAiIXgjp3b5Z8tCmVuD3+7sLPsOh0X4USyJlHlg5uz734Te8IzaMPfd30U2ZnPd8SxPaJivB9CgVrlzytaVWAgTzsucnTJJ6Fgg8ec2iD57Q3DYA1sOozRuMlSI4vZ/CLO+jG1wQd91dNly1X23gGiGX85xXkxgoFxgF5XrAsG9pvf76ACKb8zT+6DduGW37gxdZqWZZvZ5A8ysHf4cGAc9Ain0newjfZheu6p+Cw0St4FjTZqNdhujUbEcT0D+uD/hCcjeXUMp79Q3x770NEEVeFpU7EjKfmc3TrlKr+rVSVd5WhHM1J2oV2aM8gO1n/UI77H9b9fI8tfC+SoykagOJ64xSTuWUdi3nGOZpGsjC3uVRlBbQy1Jv4A5slIzdJZ4rlqggyBdPeCpNAc5URzWEktSQqIzYaaVVdejfIf0bfyBm2/4r7TqRD9fZap72BwqLiyGBFjqR7w=
-    skip_cleanup: true
-    on:
-      branch: release
-  - provider: script
-    script: scripts/docker_deploy.sh
-    on:
-      branch: release
-sudo: false
+
+ #2017-09-12 11:39:08 modified at 0
